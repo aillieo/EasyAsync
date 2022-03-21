@@ -1,0 +1,17 @@
+{
+    "name": "AillieoUtils.EasyAsync.Editor",
+    "references": [
+        "AillieoUtils.EasyAsync"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
