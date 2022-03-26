@@ -1,32 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
-using static AillieoUtils.EasyAsync.Promise;
+using System.Linq;
 
 namespace AillieoUtils.EasyAsync
 {
-    public class Promise<T>
+    public class Promise<T> : AbstractPromise
     {
-        public delegate void Callback(T arg);
-
         private T cachedArg;
 
-        State state = State.Pending;
-        Queue<Callback> always;
-        Queue<Callback> dones;
-        Queue<Callback> fails;
-
-        public Promise()
-        {
-            this.state = State.Pending;
-        }
-
-        public Promise<T> Done(Callback func)
+        public Promise<T> Done(Action<T> func)
         {
             if (state == State.Pending)
             {
-                this.dones = this.dones ?? new Queue<Callback>();
-                this.dones.Enqueue(func);
+                this.dones = this.dones ?? new Queue<Action>();
+                this.dones.Enqueue(() => func(cachedArg));
             }
             else if (state == State.Resolved)
             {
@@ -35,12 +23,12 @@ namespace AillieoUtils.EasyAsync
             return this;
         }
 
-        public Promise<T> Fail(Callback func)
+        public Promise<T> Fail(Action<T> func)
         {
             if (state == State.Pending)
             {
-                this.fails = this.fails ?? new Queue<Callback>();
-                this.fails.Enqueue(func);
+                this.fails = this.fails ?? new Queue<Action>();
+                this.fails.Enqueue(() => func(cachedArg));
             }
             else if (state == State.Rejected)
             {
@@ -49,18 +37,35 @@ namespace AillieoUtils.EasyAsync
             return this;
         }
 
-        public Promise<T> Always(Callback func)
+        public Promise<T> Always(Action<T> func)
         {
             if(state == State.Pending)
             {
-                this.always = this.always ?? new Queue<Callback>();
-                this.always.Enqueue(func);
+                this.always = this.always ?? new Queue<Action>();
+                this.always.Enqueue(() => func(cachedArg));
             }
             else
             {
                 func(cachedArg);
             }
             return this;
+        }
+
+        public Promise<T> Then(Func<Promise<T>> func)
+        {
+            Promise<T> newPromise = new Promise<T>();
+            if (state == State.Pending)
+            {
+                this.thens = this.thens ?? new Queue<Action>();
+                this.thens.Enqueue(() => func()?
+                    .Done(value => newPromise.Resolve(value))
+                    .Fail(value => newPromise.Reject(value)));
+            }
+            else
+            {
+                return func();
+            }
+            return newPromise;
         }
 
         public void Resolve(T arg)
@@ -76,7 +81,7 @@ namespace AillieoUtils.EasyAsync
             {
                 while (always.Count > 0)
                 {
-                    always.Dequeue().Invoke(arg);
+                    always.Dequeue().Invoke();
                 }
                 always = null;
             }
@@ -85,9 +90,18 @@ namespace AillieoUtils.EasyAsync
             {
                 while (dones.Count > 0)
                 {
-                    dones.Dequeue().Invoke(arg);
+                    dones.Dequeue().Invoke();
                 }
                 dones = null;
+            }
+
+            if(thens != null)
+            {
+                while (thens.Count > 0)
+                {
+                    thens.Dequeue().Invoke();
+                }
+                thens = null;
             }
 
             fails.Clear();
@@ -109,7 +123,7 @@ namespace AillieoUtils.EasyAsync
             {
                 while (always.Count > 0)
                 {
-                    always.Dequeue().Invoke(arg);
+                    always.Dequeue().Invoke();
                 }
                 always = null;
             }
@@ -118,9 +132,18 @@ namespace AillieoUtils.EasyAsync
             {
                 while (fails.Count > 0)
                 {
-                    fails.Dequeue().Invoke(arg);
+                    fails.Dequeue().Invoke();
                 }
                 fails = null;
+            }
+
+            if(thens != null)
+            {
+                while (thens.Count > 0)
+                {
+                    thens.Dequeue().Invoke();
+                }
+                thens = null;
             }
 
             dones.Clear();
@@ -130,31 +153,32 @@ namespace AillieoUtils.EasyAsync
 
         }
 
-        public static Promise<IList<T>> All(params Promise<T>[] promises)
+        public static Promise<IEnumerable<T>> All(params Promise<T>[] promises)
         {
-            return All(promises as IList<Promise<T>>);
+            return All(promises as IEnumerable<Promise<T>>);
         }
 
-        public static Promise<IList<T>> All(IList<Promise<T>> promises)
+        public static Promise<IEnumerable<T>> All(IEnumerable<Promise<T>> promises)
         {
-            Promise<IList<T>> promise = new Promise<IList<T>>();
-            int count = promises.Count;
+            Promise<IEnumerable<T>> promise = new Promise<IEnumerable<T>>();
+            int count = promises.Count();
             if (count == 0)
             {
                 promise.Resolve(null);
                 return promise;
             }
 
-            IList<T> args = new List<T>(count);
+            List<T> args = new List<T>(count);
 
             int rest = count;
             bool success = true;
 
-            for (int i = 0; i < count; ++i)
+            int index = 0;
+            foreach (Promise<T> p in promises)
             {
-                promises[i].Done((arg) =>
+                p.Done((arg) =>
                 {
-                    args[i] = arg;
+                    args[index] = arg;
                     rest--;
                     if (rest == 0)
                     {
@@ -170,7 +194,7 @@ namespace AillieoUtils.EasyAsync
                 })
                 .Fail((arg) =>
                 {
-                    args[i] = arg;
+                    args[index] = arg;
                     rest--;
                     success = false;
                     if (rest == 0)
@@ -178,6 +202,7 @@ namespace AillieoUtils.EasyAsync
                         promise.Reject(args);
                     }
                 });
+                index++;
             }
 
             return promise;

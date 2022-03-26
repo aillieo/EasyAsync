@@ -2,71 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Linq;
 
 namespace AillieoUtils.EasyAsync
 {
-    public class Promise
+    public class Promise : AbstractPromise
     {
-        public delegate void Callback();
-
-        internal enum State {
-            Pending = 0,
-            Rejected = 1,
-            Resolved = 2,
-        }
-
-        State state = State.Pending;
-        Queue<Callback> always;
-        Queue<Callback> dones;
-        Queue<Callback> fails;
-
-        public Promise()
-        {
-            this.state = State.Pending;
-        }
-
-        public Promise Done(Callback func)
-        {
-            if (state == State.Pending)
-            {
-                this.dones = this.dones ?? new Queue<Callback>();
-                this.dones.Enqueue(func);
-            }
-            else if (state == State.Resolved)
-            {
-                func();
-            }
-            return this;
-        }
-
-        public Promise Fail(Callback func)
-        {
-            if (state == State.Pending)
-            {
-                this.fails = this.fails ?? new Queue<Callback>();
-                this.fails.Enqueue(func);
-            }
-            else if (state == State.Rejected)
-            {
-                func();
-            }
-            return this;
-        }
-
-        public Promise Always(Callback func)
-        {
-            if(state == State.Pending)
-            {
-                this.always = this.always ?? new Queue<Callback>();
-                this.always.Enqueue(func);
-            }
-            else
-            {
-                func();
-            }
-            return this;
-        }
-
         public void Resolve()
         {
             if (state != State.Pending)
@@ -92,6 +33,15 @@ namespace AillieoUtils.EasyAsync
                     dones.Dequeue().Invoke();
                 }
                 dones = null;
+            }
+
+            if(thens != null)
+            {
+                while (thens.Count > 0)
+                {
+                    thens.Dequeue().Invoke();
+                }
+                thens = null;
             }
 
             fails.Clear();
@@ -125,19 +75,28 @@ namespace AillieoUtils.EasyAsync
                 fails = null;
             }
 
+            if (thens != null)
+            {
+                while (thens.Count > 0)
+                {
+                    thens.Dequeue().Invoke();
+                }
+                thens = null;
+            }
+
             dones.Clear();
             dones = null;
         }
 
         public static Promise All(params Promise[] promises)
         {
-            return All(promises as IList<Promise>);
+            return All(promises as IEnumerable<Promise>);
         }
 
-        public static Promise All(IList<Promise> promises)
+        public static Promise All(IEnumerable<Promise> promises)
         {
             Promise promise = new Promise();
-            int count = promises.Count;
+            int count = promises.Count();
             if (count == 0)
             {
                 promise.Resolve();
@@ -147,9 +106,9 @@ namespace AillieoUtils.EasyAsync
             int rest = count;
             bool success = true;
 
-            for (int i = 0; i < count; ++i)
+            foreach(Promise p in promises)
             {
-                promises[i].Done(() =>
+                p.Done(() =>
                 {
                     rest--;
                     if (rest == 0)
