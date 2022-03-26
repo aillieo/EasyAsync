@@ -2,45 +2,69 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using System.Linq;
+using UnityEngine.Assertions;
 
 namespace AillieoUtils.EasyAsync
 {
     public abstract class AbstractPromise
     {
-        protected internal enum State
+        [Flags]
+        public enum State : byte
         {
-            Pending = 0,
-            Rejected = 1,
-            Resolved = 2,
+            Pending = 0b00,
+            Fulfilled = 0b01,
+            Rejected = 0b10,
         }
 
-        protected State state = State.Pending;
-        protected Queue<Action> always;
-        protected Queue<Action> dones;
-        protected Queue<Action> fails;
-        protected Queue<Action> thens;
+        protected struct Callback
+        {
+            public Action action;
+            public State flag;
 
-        public AbstractPromise Done(Action func)
+            public Callback(Action action, State flag)
+            {
+                this.action = action;
+                this.flag = flag;
+            }
+        }
+
+        private State s = State.Pending;
+        public State state
+        {
+            get { return s;}
+            protected set
+            {
+                Assert.AreEqual(s, State.Pending);
+                Assert.AreNotEqual(value, State.Pending);
+                s = value;
+            }
+        }
+
+        public string reason { get; protected set; }
+        public Exception exception { get; protected set; }
+
+        protected Queue<Callback> callbacks;
+
+        public AbstractPromise OnFulfilled(Action func)
         {
             if (state == State.Pending)
             {
-                this.dones = this.dones ?? new Queue<Action>();
-                this.dones.Enqueue(func);
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(func, State.Fulfilled));
             }
-            else if (state == State.Resolved)
+            else if (state == State.Fulfilled)
             {
                 func();
             }
             return this;
         }
 
-        public AbstractPromise Fail(Action func)
+        public AbstractPromise OnRejected(Action func)
         {
             if (state == State.Pending)
             {
-                this.fails = this.fails ?? new Queue<Action>();
-                this.fails.Enqueue(func);
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(func, State.Rejected));
             }
             else if (state == State.Rejected)
             {
@@ -49,12 +73,26 @@ namespace AillieoUtils.EasyAsync
             return this;
         }
 
-        public AbstractPromise Always(Action func)
+        public AbstractPromise OnRejected(Action<string> func)
+        {
+            if (state == State.Pending)
+            {
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(() => func(reason), State.Rejected));
+            }
+            else if (state == State.Rejected)
+            {
+                func(reason);
+            }
+            return this;
+        }
+
+        public AbstractPromise OnComplete(Action func)
         {
             if(state == State.Pending)
             {
-                this.always = this.always ?? new Queue<Action>();
-                this.always.Enqueue(func);
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(func, State.Fulfilled | State.Rejected));
             }
             else
             {
@@ -68,10 +106,12 @@ namespace AillieoUtils.EasyAsync
             Promise newPromise = new Promise();
             if (state == State.Pending)
             {
-                this.thens = this.thens ?? new Queue<Action>();
-                this.thens.Enqueue(() => func()?
-                    .Done(() => newPromise.Resolve())
-                    .Fail(() => newPromise.Reject()));
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(
+                    () => func()?
+                        .OnFulfilled(() => newPromise.Resolve())
+                        .OnRejected(rsn => newPromise.Reject(rsn)),
+                    State.Fulfilled | State.Rejected));
             }
             else
             {

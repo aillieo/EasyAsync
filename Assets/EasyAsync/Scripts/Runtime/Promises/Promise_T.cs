@@ -1,52 +1,53 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
-using System.Linq;
+using UnityEngine.Assertions;
 
 namespace AillieoUtils.EasyAsync
 {
-    public class Promise<T> : AbstractPromise
+    public sealed partial class Promise<T> : AbstractPromise
     {
-        private T cachedArg;
+        private T v;
 
-        public Promise<T> Done(Action<T> func)
+        public T value
+        {
+            get
+            {
+                Assert.AreNotEqual(state, State.Pending);
+                return v;
+            }
+
+            private set
+            {
+                Assert.AreEqual(state, State.Pending);
+                v = value;
+            }
+        }
+
+        public Promise<T> OnFulfilled(Action<T> func)
         {
             if (state == State.Pending)
             {
-                this.dones = this.dones ?? new Queue<Action>();
-                this.dones.Enqueue(() => func(cachedArg));
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(() => func(value), State.Fulfilled));
             }
-            else if (state == State.Resolved)
+            else if (state == State.Fulfilled)
             {
-                func(cachedArg);
+                func(value);
             }
             return this;
         }
 
-        public Promise<T> Fail(Action<T> func)
-        {
-            if (state == State.Pending)
-            {
-                this.fails = this.fails ?? new Queue<Action>();
-                this.fails.Enqueue(() => func(cachedArg));
-            }
-            else if (state == State.Rejected)
-            {
-                func(cachedArg);
-            }
-            return this;
-        }
-
-        public Promise<T> Always(Action<T> func)
+        public Promise<T> OnComplete(Action<T> func)
         {
             if(state == State.Pending)
             {
-                this.always = this.always ?? new Queue<Action>();
-                this.always.Enqueue(() => func(cachedArg));
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(() => func(value), State.Fulfilled | State.Rejected));
             }
             else
             {
-                func(cachedArg);
+                func(value);
             }
             return this;
         }
@@ -56,10 +57,12 @@ namespace AillieoUtils.EasyAsync
             Promise<T> newPromise = new Promise<T>();
             if (state == State.Pending)
             {
-                this.thens = this.thens ?? new Queue<Action>();
-                this.thens.Enqueue(() => func()?
-                    .Done(value => newPromise.Resolve(value))
-                    .Fail(value => newPromise.Reject(value)));
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(
+                    () => func()?
+                        .OnFulfilled(value => newPromise.Resolve(value))
+                        .OnRejected(value => newPromise.Reject(reason)),
+                    State.Fulfilled | State.Rejected));
             }
             else
             {
@@ -70,142 +73,44 @@ namespace AillieoUtils.EasyAsync
 
         public void Resolve(T arg)
         {
-            if (state != State.Pending)
-            {
-                throw new Exception("Resolve when state is " + state);
-            }
+            Assert.AreEqual(state, State.Pending);
 
-            state = State.Resolved;
+            value = arg;
+            state = State.Fulfilled;
 
-            if(always != null)
+            if(callbacks != null)
             {
-                while (always.Count > 0)
+                while (callbacks.Count > 0)
                 {
-                    always.Dequeue().Invoke();
+                    Callback callback = callbacks.Dequeue();
+                    if ((callback.flag & state) != 0)
+                    {
+                        callback.action?.Invoke();
+                    }
                 }
-                always = null;
+                callbacks = null;
             }
-
-            if (dones != null)
-            {
-                while (dones.Count > 0)
-                {
-                    dones.Dequeue().Invoke();
-                }
-                dones = null;
-            }
-
-            if(thens != null)
-            {
-                while (thens.Count > 0)
-                {
-                    thens.Dequeue().Invoke();
-                }
-                thens = null;
-            }
-
-            fails.Clear();
-            fails = null;
-
-            cachedArg = arg;
         }
 
-        public void Reject(T arg)
+        public void Reject(string reason)
         {
-            if(state != State.Pending)
-            {
-                throw new Exception("Reject when state is " + state);
-            }
+            Assert.AreEqual(state, State.Pending);
 
+            this.reason = reason;
             state = State.Rejected;
 
-            if (always != null)
+            if(callbacks != null)
             {
-                while (always.Count > 0)
+                while (callbacks.Count > 0)
                 {
-                    always.Dequeue().Invoke();
-                }
-                always = null;
-            }
-
-            if(fails != null)
-            {
-                while (fails.Count > 0)
-                {
-                    fails.Dequeue().Invoke();
-                }
-                fails = null;
-            }
-
-            if(thens != null)
-            {
-                while (thens.Count > 0)
-                {
-                    thens.Dequeue().Invoke();
-                }
-                thens = null;
-            }
-
-            dones.Clear();
-            dones = null;
-
-            cachedArg = arg;
-
-        }
-
-        public static Promise<IEnumerable<T>> All(params Promise<T>[] promises)
-        {
-            return All(promises as IEnumerable<Promise<T>>);
-        }
-
-        public static Promise<IEnumerable<T>> All(IEnumerable<Promise<T>> promises)
-        {
-            Promise<IEnumerable<T>> promise = new Promise<IEnumerable<T>>();
-            int count = promises.Count();
-            if (count == 0)
-            {
-                promise.Resolve(null);
-                return promise;
-            }
-
-            List<T> args = new List<T>(count);
-
-            int rest = count;
-            bool success = true;
-
-            int index = 0;
-            foreach (Promise<T> p in promises)
-            {
-                p.Done((arg) =>
-                {
-                    args[index] = arg;
-                    rest--;
-                    if (rest == 0)
+                    Callback callback = callbacks.Dequeue();
+                    if ((callback.flag & state) != 0)
                     {
-                        if (success)
-                        {
-                            promise.Resolve(args);
-                        }
-                        else
-                        {
-                            promise.Reject(args);
-                        }
+                        callback.action?.Invoke();
                     }
-                })
-                .Fail((arg) =>
-                {
-                    args[index] = arg;
-                    rest--;
-                    success = false;
-                    if (rest == 0)
-                    {
-                        promise.Reject(args);
-                    }
-                });
-                index++;
+                }
+                callbacks = null;
             }
-
-            return promise;
         }
     }
 }
