@@ -24,80 +24,97 @@ namespace AillieoUtils.EasyAsync
             }
         }
 
-        public Promise<T> OnFulfilled(Action<T> func)
+        public Promise(Action onFulfilled = null, Action<string> onRejected = null)
+        {
+            if (onFulfilled != null)
+            {
+                OnFulfilled(onFulfilled);
+            }
+
+            if (onRejected != null)
+            {
+                OnRejected(onRejected);
+            }
+        }
+
+        public Promise(Action<T> onFulfilled, Action<string> onRejected = null)
+        {
+            if (onFulfilled != null)
+            {
+                OnFulfilled(onFulfilled);
+            }
+
+            if (onRejected != null)
+            {
+                OnRejected(onRejected);
+            }
+        }
+
+        public Promise<T> OnFulfilled(Action<T> onFulfilled)
         {
             if (state == State.Pending)
             {
                 this.callbacks = this.callbacks ?? new Queue<Callback>();
-                this.callbacks.Enqueue(new Callback(() => func(value), State.Fulfilled));
+                this.callbacks.Enqueue(new Callback(() => onFulfilled(value), State.Fulfilled));
             }
             else if (state == State.Fulfilled)
             {
-                func(value);
+                onFulfilled(value);
             }
             return this;
         }
 
-        public Promise<T> OnComplete(Action<T> func)
-        {
-            if(state == State.Pending)
-            {
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
-                this.callbacks.Enqueue(new Callback(() => func(value), State.Fulfilled | State.Rejected));
-            }
-            else
-            {
-                func(value);
-            }
-            return this;
-        }
-
-        public Promise<T> Then(Func<Promise<T>> func)
+        public Promise<T> Then(Func<Promise<T>> onResolved)
         {
             Promise<T> newPromise = new Promise<T>();
             if (state == State.Pending)
             {
                 this.callbacks = this.callbacks ?? new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(
-                    () => func()?
+                    () => onResolved()?
                         .OnFulfilled(value => newPromise.Resolve(value))
                         .OnRejected(value => newPromise.Reject(reason)),
                     State.Fulfilled | State.Rejected));
             }
             else
             {
-                return func();
+                return onResolved();
             }
             return newPromise;
         }
 
-        public void Resolve(T arg)
+        public Promise<T> Then(Func<Promise<T>> onFulfilled, Func<Promise<T>> onRejected)
         {
-            Assert.AreEqual(state, State.Pending);
-
-            value = arg;
-            state = State.Fulfilled;
-
-            if(callbacks != null)
+            if (state == State.Pending)
             {
-                while (callbacks.Count > 0)
-                {
-                    Callback callback = callbacks.Dequeue();
-                    if ((callback.flag & state) != 0)
-                    {
-                        callback.action?.Invoke();
-                    }
-                }
-                callbacks = null;
+                Promise<T> newPromise = new Promise<T>();
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(
+                    () => onFulfilled()?
+                        .OnFulfilled(value => newPromise.Resolve(value)),
+                    State.Fulfilled));
+                this.callbacks.Enqueue(new Callback(
+                    () => onFulfilled()?
+                        .OnRejected(value => newPromise.Reject(reason)),
+                    State.Rejected));
+                return newPromise;
             }
+            else if (state == State.Fulfilled)
+            {
+                return onFulfilled();
+            }
+            else if (state == State.Rejected)
+            {
+                return onRejected();
+            }
+
+            throw new Exception();
         }
 
-        public void Reject(string reason)
+        public void Resolve(T v)
         {
-            Assert.AreEqual(state, State.Pending);
-
-            this.reason = reason;
-            state = State.Rejected;
+            value = v;
+            state = State.Fulfilled;
 
             if(callbacks != null)
             {
