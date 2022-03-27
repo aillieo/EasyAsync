@@ -1,4 +1,5 @@
-﻿using System.Collections;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -26,7 +27,7 @@ namespace AillieoUtils.EasyAsync
             bool success = true;
             string reason = null;
 
-            foreach(Promise p in promises)
+            foreach (Promise p in promises)
             {
                 p.OnFulfilled(() =>
                 {
@@ -60,9 +61,53 @@ namespace AillieoUtils.EasyAsync
 
             return promise;
         }
+
+        public static Promise AllSettled(params Promise[] promises)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static Promise Any(params Promise[] promises)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static Promise Race(params Promise[] promises)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static Promise Rejected(string reason)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static Promise Resolved(AbstractPromise promise)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static Promise Resolved()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public partial class Promise<T>
     {
+        public static Promise<T> Rejected(string reason)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static Promise<T> Resolved(Promise<T> promise)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static Promise<T> Resolved(T value)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

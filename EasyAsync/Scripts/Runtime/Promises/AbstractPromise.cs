@@ -45,79 +45,157 @@ namespace AillieoUtils.EasyAsync
 
         protected Queue<Callback> callbacks;
 
-        public AbstractPromise OnFulfilled(Action func)
+        public AbstractPromise OnFulfilled(Action onFulfilled)
         {
             if (state == State.Pending)
             {
                 this.callbacks = this.callbacks ?? new Queue<Callback>();
-                this.callbacks.Enqueue(new Callback(func, State.Fulfilled));
+                this.callbacks.Enqueue(new Callback(onFulfilled, State.Fulfilled));
             }
             else if (state == State.Fulfilled)
             {
-                func();
+                onFulfilled();
             }
             return this;
         }
 
-        public AbstractPromise OnRejected(Action func)
+        public AbstractPromise OnRejected(Action onRejected)
         {
             if (state == State.Pending)
             {
                 this.callbacks = this.callbacks ?? new Queue<Callback>();
-                this.callbacks.Enqueue(new Callback(func, State.Rejected));
+                this.callbacks.Enqueue(new Callback(onRejected, State.Rejected));
             }
             else if (state == State.Rejected)
             {
-                func();
+                onRejected();
             }
             return this;
         }
 
-        public AbstractPromise OnRejected(Action<string> func)
+        public AbstractPromise OnRejected(Action<string> onRejected)
         {
             if (state == State.Pending)
             {
                 this.callbacks = this.callbacks ?? new Queue<Callback>();
-                this.callbacks.Enqueue(new Callback(() => func(reason), State.Rejected));
+                this.callbacks.Enqueue(new Callback(() => onRejected(reason), State.Rejected));
             }
             else if (state == State.Rejected)
             {
-                func(reason);
+                onRejected(reason);
             }
             return this;
         }
 
-        public AbstractPromise OnComplete(Action func)
-        {
-            if(state == State.Pending)
-            {
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
-                this.callbacks.Enqueue(new Callback(func, State.Fulfilled | State.Rejected));
-            }
-            else
-            {
-                func();
-            }
-            return this;
-        }
-
-        public AbstractPromise Then(Func<Promise> func)
+        public AbstractPromise Then(Func<Promise> onResolved)
         {
             Promise newPromise = new Promise();
             if (state == State.Pending)
             {
                 this.callbacks = this.callbacks ?? new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(
-                    () => func()?
+                    () => onResolved()?
                         .OnFulfilled(() => newPromise.Resolve())
                         .OnRejected(rsn => newPromise.Reject(rsn)),
                     State.Fulfilled | State.Rejected));
             }
             else
             {
-                return func();
+                return onResolved();
             }
             return newPromise;
+        }
+
+        public AbstractPromise Then(Action onFulfilled, Action<string> onRejected)
+        {
+            if (state == State.Pending)
+            {
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(
+                    onFulfilled,
+                    State.Fulfilled));
+                this.callbacks.Enqueue(new Callback(
+                    () => onRejected(this.reason),
+                    State.Rejected));
+            }
+            else if (state == State.Fulfilled)
+            {
+                onFulfilled();
+            }
+            else if (state == State.Rejected)
+            {
+                onRejected(this.reason);
+            }
+
+            return this;
+        }
+
+        public AbstractPromise Then(Func<Promise> onFulfilled, Func<AbstractPromise> onRejected)
+        {
+            if (state == State.Pending)
+            {
+                Promise newPromise = new Promise();
+                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks.Enqueue(new Callback(
+                    () => onFulfilled()?
+                        .OnFulfilled(() => newPromise.Resolve()),
+                    State.Fulfilled));
+                this.callbacks.Enqueue(new Callback(
+                    () => onRejected()?
+                        .OnRejected(rsn => newPromise.Reject(rsn)),
+                    State.Rejected));
+                return newPromise;
+            }
+            else if (state == State.Fulfilled)
+            {
+                return onFulfilled();
+            }
+            else if (state == State.Rejected)
+            {
+                return onRejected();
+            }
+
+            throw new Exception();
+        }
+
+        public void Reject(string reason)
+        {
+            this.reason = reason;
+            this.exception = new Exception(reason);
+            state = State.Rejected;
+
+            if (callbacks != null)
+            {
+                while (callbacks.Count > 0)
+                {
+                    Callback callback = callbacks.Dequeue();
+                    if ((callback.flag & state) != 0)
+                    {
+                        callback.action?.Invoke();
+                    }
+                }
+                callbacks = null;
+            }
+        }
+
+        public void Reject(Exception exception)
+        {
+            this.exception = exception;
+            this.reason = exception.Message;
+            state = State.Rejected;
+
+            if (callbacks != null)
+            {
+                while (callbacks.Count > 0)
+                {
+                    Callback callback = callbacks.Dequeue();
+                    if ((callback.flag & state) != 0)
+                    {
+                        callback.action?.Invoke();
+                    }
+                }
+                callbacks = null;
+            }
         }
     }
 }
