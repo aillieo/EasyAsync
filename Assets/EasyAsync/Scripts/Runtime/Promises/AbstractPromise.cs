@@ -87,26 +87,32 @@ namespace AillieoUtils.EasyAsync
             return this;
         }
 
-        public AbstractPromise Then(Func<Promise> onResolved)
+        public AbstractPromise Then(Action onFulfilled, Action onRejected = null)
         {
-            Promise newPromise = new Promise();
             if (state == State.Pending)
             {
+                Promise newPromise = new Promise();
                 this.callbacks = this.callbacks ?? new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(
-                    () => onResolved()?
-                        .OnFulfilled(() => newPromise.Resolve())
-                        .OnRejected(rsn => newPromise.Reject(rsn)),
-                    State.Fulfilled | State.Rejected));
+                    onFulfilled,
+                    State.Fulfilled));
+                this.callbacks.Enqueue(new Callback(
+                    onRejected,
+                    State.Rejected));
             }
-            else
+            else if (state == State.Fulfilled)
             {
-                return onResolved();
+                onFulfilled();
             }
-            return newPromise;
+            else if (state == State.Rejected)
+            {
+                onRejected();
+            }
+
+            return this;
         }
 
-        public AbstractPromise Then(Action onFulfilled, Action<string> onRejected)
+        public AbstractPromise Then(Action onFulfilled, Action<string> onRejected = null)
         {
             if (state == State.Pending)
             {
@@ -130,7 +136,7 @@ namespace AillieoUtils.EasyAsync
             return this;
         }
 
-        public AbstractPromise Then(Func<Promise> onFulfilled, Func<AbstractPromise> onRejected)
+        public AbstractPromise Then(Func<Promise> onFulfilled, Func<AbstractPromise> onRejected = null)
         {
             if (state == State.Pending)
             {

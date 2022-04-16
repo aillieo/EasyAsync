@@ -64,25 +64,6 @@ namespace AillieoUtils.EasyAsync
             return this;
         }
 
-        public Promise<T> Then(Func<Promise<T>> onResolved)
-        {
-            Promise<T> newPromise = new Promise<T>();
-            if (state == State.Pending)
-            {
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
-                this.callbacks.Enqueue(new Callback(
-                    () => onResolved()?
-                        .OnFulfilled(value => newPromise.Resolve(value))
-                        .OnRejected(value => newPromise.Reject(reason)),
-                    State.Fulfilled | State.Rejected));
-            }
-            else
-            {
-                return onResolved();
-            }
-            return newPromise;
-        }
-
         public Promise<T> Then(Func<Promise<T>> onFulfilled, Func<Promise<T>> onRejected)
         {
             if (state == State.Pending)
