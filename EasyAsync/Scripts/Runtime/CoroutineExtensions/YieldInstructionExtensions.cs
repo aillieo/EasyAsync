@@ -1,8 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
 using UnityEngine;
 
 namespace AillieoUtils.EasyAsync.CoroutineExtensions
@@ -11,51 +8,21 @@ namespace AillieoUtils.EasyAsync.CoroutineExtensions
     {
         public static Awaiter GetAwaiter(this YieldInstruction yieldInstruction)
         {
-            return new Awaiter(yieldInstruction);
-        }
-
-        public class Awaiter : INotifyCompletion
-        {
-            public Awaiter(YieldInstruction yieldInstruction)
-            {
-                this.yieldInstruction = yieldInstruction;
-                CoroutineRunner.Instance.StartCoroutine(new EnumWrapper(this));
-            }
-
-            internal YieldInstruction yieldInstruction;
-            private Action continuation;
-            private Exception exception;
-            public bool IsCompleted { get; private set; }
-
-            void INotifyCompletion.OnCompleted(Action continuation)
-            {
-                this.continuation = continuation;
-            }
-
-            internal void SetComplete(Exception exception = null)
-            {
-                this.exception = exception;
-                IsCompleted = true;
-                this.continuation?.Invoke();
-            }
-
-            public void GetResult()
-            {
-                if (exception != null)
-                {
-                    ExceptionDispatchInfo.Capture(exception).Throw();
-                }
-            }
+            Awaiter awaiter = new Awaiter();
+            CoroutineRunner.Instance.StartCoroutine(new EnumWrapper(awaiter, yieldInstruction));
+            return awaiter;
         }
 
         internal class EnumWrapper : IEnumerator
         {
             private readonly Awaiter awaiter;
+            private readonly YieldInstruction yieldInstruction;
             private object current;
 
-            public EnumWrapper(Awaiter awaiter)
+            public EnumWrapper(Awaiter awaiter, YieldInstruction yieldInstruction)
             {
                 this.awaiter = awaiter;
+                this.yieldInstruction = yieldInstruction;
             }
 
             object IEnumerator.Current => current;
@@ -64,11 +31,11 @@ namespace AillieoUtils.EasyAsync.CoroutineExtensions
             {
                 if (current == null)
                 {
-                    current = awaiter.yieldInstruction;
+                    current = yieldInstruction;
                     return true;
                 }
 
-                awaiter.SetComplete();
+                awaiter.Complete();
                 return false;
             }
 

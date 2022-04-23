@@ -10,22 +10,22 @@ namespace AillieoUtils.EasyAsync.Sample
     {
         private async void Start()
         {
-            Debug.LogError("begin");
+            Debug.Log("Start 0");
             await new WaitForSeconds(2);
-            Debug.LogError("222");
+            Debug.Log("Start 1");
             await StartCoroutine(CustomCoroutine());
-            Debug.LogError("end");
+            Debug.Log("Start 2");
             await CustomCoroutine();
-            Debug.LogError("end 2");
+            Debug.Log("Start 3");
         }
 
         private IEnumerator CustomCoroutine()
         {
-            UnityEngine.Debug.LogError("CustomCoroutine 0");
+            Debug.Log("CustomCoroutine 0");
             yield return new WaitForSeconds(2);
-            UnityEngine.Debug.LogError("CustomCoroutine 1");
+            Debug.Log("CustomCoroutine 1");
             yield return new WaitForSeconds(2);
-            UnityEngine.Debug.LogError("CustomCoroutine 2");
+            Debug.Log("CustomCoroutine 2");
         }
     }
 }
