@@ -37,5 +37,10 @@ namespace AillieoUtils.EasyAsync
                 callbacks = null;
             }
         }
+
+        public Awaiter GetAwaiter()
+        {
+            throw new Exception();
+        }
     }
 }

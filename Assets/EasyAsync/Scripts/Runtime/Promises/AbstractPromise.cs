@@ -49,7 +49,7 @@ namespace AillieoUtils.EasyAsync
         {
             if (state == State.Pending)
             {
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks ??= new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(onFulfilled, State.Fulfilled));
             }
             else if (state == State.Fulfilled)
@@ -63,7 +63,7 @@ namespace AillieoUtils.EasyAsync
         {
             if (state == State.Pending)
             {
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks ??= new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(onRejected, State.Rejected));
             }
             else if (state == State.Rejected)
@@ -77,7 +77,7 @@ namespace AillieoUtils.EasyAsync
         {
             if (state == State.Pending)
             {
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks ??= new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(() => onRejected(reason), State.Rejected));
             }
             else if (state == State.Rejected)
@@ -92,7 +92,7 @@ namespace AillieoUtils.EasyAsync
             if (state == State.Pending)
             {
                 Promise newPromise = new Promise();
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks ??= new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(
                     onFulfilled,
                     State.Fulfilled));
@@ -116,7 +116,7 @@ namespace AillieoUtils.EasyAsync
         {
             if (state == State.Pending)
             {
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks ??= new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(
                     onFulfilled,
                     State.Fulfilled));
@@ -141,7 +141,7 @@ namespace AillieoUtils.EasyAsync
             if (state == State.Pending)
             {
                 Promise newPromise = new Promise();
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks ??= new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(
                     () => onFulfilled()?
                         .OnFulfilled(() => newPromise.Resolve()),

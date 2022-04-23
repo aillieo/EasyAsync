@@ -10,11 +10,11 @@ namespace AillieoUtils.EasyAsync.Sample
         private IEnumerator Start()
         {
             yield return Task.Delay(1000).AsCoroutine();
-            UnityEngine.Debug.LogError("1");
+            Debug.Log("1");
             yield return Task.Delay(1000).AsCoroutine();
-            UnityEngine.Debug.LogError("2");
+            Debug.Log("2");
             yield return Task.Delay(1000).AsCoroutine();
-            UnityEngine.Debug.LogError("3");
+            Debug.Log("3");
         }
     }
 }

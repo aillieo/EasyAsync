@@ -19,7 +19,7 @@ namespace AillieoUtils.EasyAsync.CoroutineExtensions
 
         private static CoroutineRunner instance;
 
-        public static CoroutineRunner Instance
+        internal static CoroutineRunner Instance
         {
             get
             {

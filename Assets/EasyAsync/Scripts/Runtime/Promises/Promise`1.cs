@@ -54,7 +54,7 @@ namespace AillieoUtils.EasyAsync
         {
             if (state == State.Pending)
             {
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks ??= new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(() => onFulfilled(value), State.Fulfilled));
             }
             else if (state == State.Fulfilled)
@@ -69,7 +69,7 @@ namespace AillieoUtils.EasyAsync
             if (state == State.Pending)
             {
                 Promise<T> newPromise = new Promise<T>();
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks ??= new Queue<Callback>();
                 this.callbacks.Enqueue(new Callback(
                     () => onFulfilled()?
                         .OnFulfilled(value => newPromise.Resolve(value)),
@@ -109,6 +109,13 @@ namespace AillieoUtils.EasyAsync
                 }
                 callbacks = null;
             }
+        }
+
+        public Awaiter<T> GetAwaiter()
+        {
+            Awaiter<T> awaiter = new Awaiter<T>();
+            OnFulfilled(o => awaiter.Complete(o));
+            return awaiter;
         }
     }
 }
