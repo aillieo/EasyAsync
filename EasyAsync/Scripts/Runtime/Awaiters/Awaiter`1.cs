@@ -5,7 +5,7 @@ using UnityEngine.Assertions;
 
 namespace AillieoUtils.EasyAsync
 {
-    public class Awaiter<T> : INotifyCompletion
+    public class Awaiter<T> : ICriticalNotifyCompletion
     {
         private Exception exception;
         private Action continuation;
@@ -33,11 +33,18 @@ namespace AillieoUtils.EasyAsync
             exception = e;
             this.result = result;
 
-            // todo 是否要返回到主线程
             continuation?.Invoke();
         }
 
         void INotifyCompletion.OnCompleted(Action continuation)
+        {
+            Assert.IsNull(this.continuation);
+            Assert.IsFalse(IsCompleted);
+
+            this.continuation = continuation;
+        }
+
+        void ICriticalNotifyCompletion.UnsafeOnCompleted(Action continuation)
         {
             Assert.IsNull(this.continuation);
             Assert.IsFalse(IsCompleted);

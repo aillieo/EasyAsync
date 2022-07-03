@@ -82,7 +82,7 @@ namespace AillieoUtils.EasyAsync
             throw new NotImplementedException();
         }
 
-        public static Promise Resolved(AbstractPromise promise)
+        public static Promise Resolved(Promise promise)
         {
             throw new NotImplementedException();
         }
