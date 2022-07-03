@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using System;
 using UnityEngine.Assertions;
 
@@ -13,13 +11,13 @@ namespace AillieoUtils.EasyAsync
         {
             get
             {
-                Assert.AreNotEqual(state, State.Pending);
+                Assert.AreNotEqual(state, Promise.State.Pending);
                 return v;
             }
 
             private set
             {
-                Assert.AreEqual(state, State.Pending);
+                Assert.AreEqual(state, Promise.State.Pending);
                 v = value;
             }
         }
@@ -52,12 +50,12 @@ namespace AillieoUtils.EasyAsync
 
         public Promise<T> OnFulfilled(Action<T> onFulfilled)
         {
-            if (state == State.Pending)
+            if (state == Promise.State.Pending)
             {
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
-                this.callbacks.Enqueue(new Callback(() => onFulfilled(value), State.Fulfilled));
+                this.callbacks = this.callbacks ?? CallbackQueue.Get();
+                this.callbacks.Enqueue(new Callback(() => onFulfilled(value), Promise.State.Fulfilled));
             }
-            else if (state == State.Fulfilled)
+            else if (state == Promise.State.Fulfilled)
             {
                 onFulfilled(value);
             }
@@ -66,25 +64,25 @@ namespace AillieoUtils.EasyAsync
 
         public Promise<T> Then(Func<Promise<T>> onFulfilled, Func<Promise<T>> onRejected)
         {
-            if (state == State.Pending)
+            if (state == Promise.State.Pending)
             {
                 Promise<T> newPromise = new Promise<T>();
-                this.callbacks = this.callbacks ?? new Queue<Callback>();
+                this.callbacks = this.callbacks ?? CallbackQueue.Get();
                 this.callbacks.Enqueue(new Callback(
                     () => onFulfilled()?
                         .OnFulfilled(value => newPromise.Resolve(value)),
-                    State.Fulfilled));
+                    Promise.State.Fulfilled));
                 this.callbacks.Enqueue(new Callback(
                     () => onFulfilled()?
                         .OnRejected(value => newPromise.Reject(reason)),
-                    State.Rejected));
+                    Promise.State.Rejected));
                 return newPromise;
             }
-            else if (state == State.Fulfilled)
+            else if (state == Promise.State.Fulfilled)
             {
                 return onFulfilled();
             }
-            else if (state == State.Rejected)
+            else if (state == Promise.State.Rejected)
             {
                 return onRejected();
             }
@@ -95,20 +93,8 @@ namespace AillieoUtils.EasyAsync
         public void Resolve(T v)
         {
             value = v;
-            state = State.Fulfilled;
-
-            if(callbacks != null)
-            {
-                while (callbacks.Count > 0)
-                {
-                    Callback callback = callbacks.Dequeue();
-                    if ((callback.flag & state) != 0)
-                    {
-                        callback.action?.Invoke();
-                    }
-                }
-                callbacks = null;
-            }
+            state = Promise.State.Fulfilled;
+            ProcessCallbacks();
         }
 
         public Awaiter<T> GetAwaiter()
