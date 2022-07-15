@@ -1,7 +1,9 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace AillieoUtils.EasyAsync
 {
+    [AsyncMethodBuilder(typeof(EasyAsyncTaskMethodBuilder))]
     public sealed partial class Promise : AbstractPromise
     {
         [Flags]

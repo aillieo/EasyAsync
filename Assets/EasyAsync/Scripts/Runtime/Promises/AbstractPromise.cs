@@ -175,7 +175,7 @@ namespace AillieoUtils.EasyAsync
                     while (callbacks.Count > 0)
                     {
                         Callback callback = callbacks.Dequeue();
-                        if ((callback.flag & state) != 0)
+                        if ((callback.mask & state) != 0)
                         {
                             callback.action?.Invoke();
                         }
