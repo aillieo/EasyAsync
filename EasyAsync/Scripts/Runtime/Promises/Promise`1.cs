@@ -1,8 +1,10 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine.Assertions;
 
 namespace AillieoUtils.EasyAsync
 {
+    [AsyncMethodBuilder(typeof(EasyAsyncTaskMethodBuilder<>))]
     public sealed partial class Promise<T> : AbstractPromise
     {
         private T v;

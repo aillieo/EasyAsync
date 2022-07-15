@@ -5,12 +5,12 @@ namespace AillieoUtils.EasyAsync
     internal struct Callback
     {
         public readonly Action action;
-        public readonly Promise.State flag;
+        public readonly Promise.State mask;
 
-        public Callback(Action action, Promise.State flag)
+        public Callback(Action action, Promise.State mask)
         {
             this.action = action;
-            this.flag = flag;
+            this.mask = mask;
         }
     }
 }
