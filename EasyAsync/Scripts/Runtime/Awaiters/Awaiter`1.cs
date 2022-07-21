@@ -5,51 +5,69 @@ using UnityEngine.Assertions;
 
 namespace AillieoUtils.EasyAsync
 {
-    public class Awaiter<T> : ICriticalNotifyCompletion
+    public struct Awaiter<T> : ICriticalNotifyCompletion
     {
-        private Exception exception;
-        private Action continuation;
-        private T result;
+        internal readonly Promise<T> promise;
 
-        public bool IsCompleted { get; private set; } = false;
+        public Awaiter(Promise<T> promise)
+        {
+            this.promise = promise;
+        }
+
+        public bool IsCompleted
+        {
+            get
+            {
+                if (promise != null)
+                {
+                    return promise.state != Promise.State.Pending;
+                }
+
+                return true;
+            }
+        }
 
         public T GetResult()
         {
             Assert.IsTrue(IsCompleted);
 
-            if (exception != null)
+            if (promise != null && promise.exception != null)
             {
-                ExceptionDispatchInfo.Capture(exception).Throw();
+                ExceptionDispatchInfo.Capture(promise.exception).Throw();
             }
 
-            return result;
+            return promise.value;
         }
 
-        public void Complete(T result, Exception e = null)
-        {
-            Assert.IsFalse(IsCompleted);
+        //public void Complete(T result, Exception e = null)
+        //{
+        //    Assert.IsFalse(IsCompleted);
+        //    Assert.IsNotNull(promise);
 
-            IsCompleted = true;
-            exception = e;
-            this.result = result;
-
-            continuation?.Invoke();
-        }
+        //    if (e == null)
+        //    {
+        //        promise.Resolve(result);
+        //    }
+        //    else
+        //    {
+        //        promise.Reject(e);
+        //    }
+        //}
 
         void INotifyCompletion.OnCompleted(Action continuation)
         {
-            Assert.IsNull(this.continuation);
             Assert.IsFalse(IsCompleted);
+            Assert.IsNotNull(promise);
 
-            this.continuation = continuation;
+            promise.OnFulfilled(continuation).OnRejected(continuation);
         }
 
         void ICriticalNotifyCompletion.UnsafeOnCompleted(Action continuation)
         {
-            Assert.IsNull(this.continuation);
             Assert.IsFalse(IsCompleted);
+            Assert.IsNotNull(promise);
 
-            this.continuation = continuation;
+            promise.OnFulfilled(continuation).OnRejected(continuation);
         }
     }
 }

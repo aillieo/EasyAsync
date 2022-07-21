@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace AillieoUtils.EasyAsync.Tests
 {
@@ -40,10 +41,18 @@ namespace AillieoUtils.EasyAsync.Tests
             Assert.Catch(typeof(Exception), () => promise.Reject(reason));
         }
 
-        [Test]
-        public static void TestThenNoValue()
+        //[Test]
+        public static async Promise TestThenNoValue1()
         {
             Promise promise = new Promise();
+            await promise;
+        }
+
+        //[Test]
+        public static async Promise<int> TestThenNoValue2()
+        {
+            Promise<int> promise = new Promise<int>();
+            return await promise;
         }
     }
 }

@@ -12,7 +12,7 @@ namespace AillieoUtils.EasyAsync.TaskExtensions
             return new EnumWrapper(task);
         }
 
-        public class EnumWrapper : IEnumerator
+        public struct EnumWrapper : IEnumerator
         {
             private readonly Task task;
 
