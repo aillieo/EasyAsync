@@ -8,11 +8,11 @@ namespace AillieoUtils.EasyAsync
     {
         private const int capacity = 256;
         private static readonly Stack<Queue<Callback>> pool = new Stack<Queue<Callback>>();
-        private static object locker = new object();
+        private static readonly object syncRoot = new object();
 
         public static Queue<Callback> Get()
         {
-            lock (locker)
+            lock (syncRoot)
             {
                 if (pool.Count > 0)
                 {
@@ -25,7 +25,7 @@ namespace AillieoUtils.EasyAsync
 
         public static void Recycle(Queue<Callback> queue)
         {
-            lock (locker)
+            lock (syncRoot)
             {
                 if (pool.Count < capacity)
                 {

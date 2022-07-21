@@ -8,20 +8,20 @@ namespace AillieoUtils.EasyAsync.CoroutineExtensions
     {
         public static Awaiter GetAwaiter(this YieldInstruction yieldInstruction)
         {
-            Awaiter awaiter = new Awaiter();
-            CoroutineRunner.Instance.StartCoroutine(new EnumWrapper(awaiter, yieldInstruction));
-            return awaiter;
+            Promise promise = new Promise();
+            CoroutineRunner.Instance.StartCoroutine(new EnumWrapper(promise, yieldInstruction));
+            return promise.GetAwaiter();
         }
 
         internal class EnumWrapper : IEnumerator
         {
-            private readonly Awaiter awaiter;
+            private readonly Promise promise;
             private readonly YieldInstruction yieldInstruction;
             private object current;
 
-            public EnumWrapper(Awaiter awaiter, YieldInstruction yieldInstruction)
+            public EnumWrapper(Promise promise, YieldInstruction yieldInstruction)
             {
-                this.awaiter = awaiter;
+                this.promise = promise;
                 this.yieldInstruction = yieldInstruction;
             }
 
@@ -35,7 +35,7 @@ namespace AillieoUtils.EasyAsync.CoroutineExtensions
                     return true;
                 }
 
-                awaiter.Complete();
+                promise.Resolve();
                 return false;
             }
 

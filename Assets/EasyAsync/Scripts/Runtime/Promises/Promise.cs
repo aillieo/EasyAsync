@@ -14,19 +14,6 @@ namespace AillieoUtils.EasyAsync
             Rejected = 0b10,
         }
 
-        public Promise(Action onFulfilled = null, Action<string> onRejected = null)
-        {
-            if (onFulfilled != null)
-            {
-                OnFulfilled(onFulfilled);
-            }
-
-            if (onRejected != null)
-            {
-                OnRejected(onRejected);
-            }
-        }
-
         public void Resolve()
         {
             state = State.Fulfilled;
@@ -35,7 +22,7 @@ namespace AillieoUtils.EasyAsync
 
         public Awaiter GetAwaiter()
         {
-            throw new Exception();
+            return new Awaiter(this);
         }
     }
 }

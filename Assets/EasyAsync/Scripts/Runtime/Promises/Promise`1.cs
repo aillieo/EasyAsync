@@ -24,32 +24,6 @@ namespace AillieoUtils.EasyAsync
             }
         }
 
-        public Promise(Action onFulfilled = null, Action<string> onRejected = null)
-        {
-            if (onFulfilled != null)
-            {
-                OnFulfilled(onFulfilled);
-            }
-
-            if (onRejected != null)
-            {
-                OnRejected(onRejected);
-            }
-        }
-
-        public Promise(Action<T> onFulfilled, Action<string> onRejected = null)
-        {
-            if (onFulfilled != null)
-            {
-                OnFulfilled(onFulfilled);
-            }
-
-            if (onRejected != null)
-            {
-                OnRejected(onRejected);
-            }
-        }
-
         public Promise<T> OnFulfilled(Action<T> onFulfilled)
         {
             if (state == Promise.State.Pending)
@@ -101,9 +75,12 @@ namespace AillieoUtils.EasyAsync
 
         public Awaiter<T> GetAwaiter()
         {
-            Awaiter<T> awaiter = new Awaiter<T>();
-            OnFulfilled(o => awaiter.Complete(o));
-            return awaiter;
+            return new Awaiter<T>(this);
+        }
+
+        public Promise ToTypeless()
+        {
+            return new Promise();
         }
     }
 }

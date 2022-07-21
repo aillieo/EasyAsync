@@ -7,32 +7,30 @@ namespace AillieoUtils.EasyAsync.CoroutineExtensions
     {
         public static Awaiter GetAwaiter(this IEnumerator enumerator)
         {
-            Awaiter awaiter = new Awaiter();
-            CoroutineRunner.Instance.StartCoroutine(new EnumWrapper(awaiter, enumerator));
-            return awaiter;
+            Promise promise = new Promise();
+            CoroutineRunner.Instance.StartCoroutine(new EnumWrapper(promise, enumerator));
+            return promise.GetAwaiter();
         }
 
-        internal class EnumWrapper : IEnumerator
+        internal struct EnumWrapper : IEnumerator
         {
+            private readonly Promise promise;
             private readonly IEnumerator enumerator;
-            private readonly Awaiter awaiter;
-            private object current;
 
-            public EnumWrapper(Awaiter awaiter, IEnumerator enumerator)
+            public EnumWrapper(Promise promise, IEnumerator enumerator)
             {
-                this.awaiter = awaiter;
+                this.promise = promise;
                 this.enumerator = enumerator;
             }
 
-            object IEnumerator.Current => current;
+            object IEnumerator.Current => enumerator.Current;
 
             bool IEnumerator.MoveNext()
             {
                 bool result = enumerator.MoveNext();
-                current = enumerator.Current;
                 if (!result)
                 {
-                    awaiter.Complete();
+                    promise.Resolve();
                 }
 
                 return result;
