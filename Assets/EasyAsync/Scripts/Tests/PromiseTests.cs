@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using System;
-using System.Runtime.CompilerServices;
+using UnityEngine.TestTools;
 
 namespace AillieoUtils.EasyAsync.Tests
 {
@@ -41,18 +41,22 @@ namespace AillieoUtils.EasyAsync.Tests
             Assert.Catch(typeof(Exception), () => promise.Reject(reason));
         }
 
-        //[Test]
-        public static async Promise TestThenNoValue1()
+        [UnityTest]
+        public static IEnumerator TestThenNoValue1()
         {
-            Promise promise = new Promise();
-            await promise;
+            bool finished = false;
+            Promise promise = PromiseHelper.SimpleDelayNoValue(0.1f);
+            promise.Then(() => finished = true, (Action)null);
+            yield return new WaitUntil(() => finished);
         }
 
-        //[Test]
-        public static async Promise<int> TestThenNoValue2()
+        [UnityTest]
+        public static IEnumerator TestThenNoValue2()
         {
-            Promise<int> promise = new Promise<int>();
-            return await promise;
+            bool finished = false;
+            Promise<int> promise = PromiseHelper.SimpleDelay<int>(0.1f, 100);
+            promise.Then(() => finished = true, (Action)null);
+            yield return new WaitUntil(() => finished);
         }
     }
 }

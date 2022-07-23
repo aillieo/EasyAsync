@@ -7,7 +7,7 @@ namespace AillieoUtils.EasyAsync
     public sealed partial class Promise : AbstractPromise
     {
         [Flags]
-        public enum State : byte
+        public enum Status : byte
         {
             Pending = 0b00,
             Fulfilled = 0b01,
@@ -16,7 +16,7 @@ namespace AillieoUtils.EasyAsync
 
         public void Resolve()
         {
-            state = State.Fulfilled;
+            status = Status.Fulfilled;
             ProcessCallbacks();
         }
 
