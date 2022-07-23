@@ -13,63 +13,83 @@ namespace AillieoUtils.EasyAsync
         {
             get
             {
-                Assert.AreNotEqual(state, Promise.State.Pending);
+                Assert.AreNotEqual(status, Promise.Status.Pending);
                 return v;
             }
 
             private set
             {
-                Assert.AreEqual(state, Promise.State.Pending);
+                Assert.AreEqual(status, Promise.Status.Pending);
                 v = value;
             }
         }
 
         public Promise<T> OnFulfilled(Action<T> onFulfilled)
         {
-            if (state == Promise.State.Pending)
+            if (status == Promise.Status.Pending)
             {
                 this.callbacks = this.callbacks ?? CallbackQueue.Get();
-                this.callbacks.Enqueue(new Callback(() => onFulfilled(value), Promise.State.Fulfilled));
+                this.callbacks.Enqueue(new Callback(Promise.Status.Fulfilled, () => onFulfilled(this.value)));
             }
-            else if (state == Promise.State.Fulfilled)
+            else if (status == Promise.Status.Fulfilled)
             {
-                onFulfilled(value);
+                if (callbacks != null)
+                {
+                    this.callbacks.Enqueue(new Callback(Promise.Status.Fulfilled, () => onFulfilled(this.value)));
+                }
+                else
+                {
+                    onFulfilled(value);
+                }
             }
+
             return this;
         }
 
         public Promise<T> Then(Func<Promise<T>> onFulfilled, Func<Promise<T>> onRejected)
         {
-            if (state == Promise.State.Pending)
+            if (status == Promise.Status.Pending)
             {
                 Promise<T> newPromise = new Promise<T>();
                 this.callbacks = this.callbacks ?? CallbackQueue.Get();
-                this.callbacks.Enqueue(new Callback(
-                    () => onFulfilled()?
-                        .OnFulfilled(value => newPromise.Resolve(value)),
-                    Promise.State.Fulfilled));
-                this.callbacks.Enqueue(new Callback(
-                    () => onFulfilled()?
-                        .OnRejected(value => newPromise.Reject(reason)),
-                    Promise.State.Rejected));
+                this.callbacks.Enqueue(new Callback(Promise.Status.Fulfilled, () => onFulfilled()?.OnFulfilled(val => newPromise.Resolve(val))));
+                this.callbacks.Enqueue(new Callback(Promise.Status.Rejected, () => onFulfilled()?.OnRejected(rsn => newPromise.Reject(rsn))));
                 return newPromise;
             }
-            else if (state == Promise.State.Fulfilled)
+            else if (status == Promise.Status.Fulfilled)
             {
-                return onFulfilled();
+                if (callbacks != null)
+                {
+                    Promise<T> newPromise = new Promise<T>();
+                    this.callbacks.Enqueue(new Callback(Promise.Status.Fulfilled, () => onFulfilled()?.OnFulfilled(val => newPromise.Resolve(val))));
+                    return newPromise;
+                }
+                else
+                {
+                    return onFulfilled();
+                }
             }
-            else if (state == Promise.State.Rejected)
+            else if (status == Promise.Status.Rejected)
             {
-                return onRejected();
+                if (callbacks != null)
+                {
+                    Promise<T> newPromise = new Promise<T>();
+                    this.callbacks.Enqueue(new Callback(Promise.Status.Rejected, () => onFulfilled()?.OnRejected(rsn => newPromise.Reject(rsn))));
+                    return newPromise;
+                }
+                else
+                {
+                    return onRejected();
+                }
             }
 
-            throw new Exception();
+            throw new InvalidOperationException();
         }
 
         public void Resolve(T v)
         {
             value = v;
-            state = Promise.State.Fulfilled;
+            status = Promise.Status.Fulfilled;
             ProcessCallbacks();
         }
 
@@ -80,7 +100,7 @@ namespace AillieoUtils.EasyAsync
 
         public Promise ToTypeless()
         {
-            return new Promise();
+            return ((AbstractPromise)this).Then((Action)null, (Action)null) as Promise;
         }
     }
 }

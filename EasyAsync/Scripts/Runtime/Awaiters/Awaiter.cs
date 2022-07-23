@@ -20,7 +20,7 @@ namespace AillieoUtils.EasyAsync
             {
                 if (promise != null)
                 {
-                    return promise.state != Promise.State.Pending;
+                    return promise.status != Promise.Status.Pending;
                 }
 
                 return true;
