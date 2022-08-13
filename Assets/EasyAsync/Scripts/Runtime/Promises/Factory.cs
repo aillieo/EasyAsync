@@ -79,7 +79,9 @@ namespace AillieoUtils.EasyAsync
 
         public static Promise Rejected(string reason)
         {
-            throw new NotImplementedException();
+            Promise promise = new Promise();
+            promise.Reject(reason);
+            return promise;
         }
 
         public static Promise Resolved(Promise promise)
@@ -89,7 +91,9 @@ namespace AillieoUtils.EasyAsync
 
         public static Promise Resolved()
         {
-            throw new NotImplementedException();
+            Promise promise = new Promise();
+            promise.Resolve();
+            return promise;
         }
     }
 
