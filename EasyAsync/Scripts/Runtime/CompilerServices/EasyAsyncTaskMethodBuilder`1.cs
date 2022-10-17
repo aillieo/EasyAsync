@@ -1,9 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using UnityEngine;
 
 namespace AillieoUtils.EasyAsync
 {
@@ -11,6 +8,7 @@ namespace AillieoUtils.EasyAsync
     {
         private Promise<T> promise;
 
+        [DebuggerHidden]
         public Promise<T> Task
         {
             get
@@ -24,21 +22,25 @@ namespace AillieoUtils.EasyAsync
             }
         }
 
+        [DebuggerHidden]
         public static EasyAsyncTaskMethodBuilder<T> Create()
         {
             return default;
         }
 
+        [DebuggerHidden]
         public void Start<TStateMachine>(ref TStateMachine stateMachine)
             where TStateMachine : IAsyncStateMachine
         {
             stateMachine.MoveNext();
         }
 
+        [DebuggerHidden]
         public void SetStateMachine(IAsyncStateMachine stateMachine)
         {
         }
 
+        [DebuggerHidden]
         public void AwaitOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
             where TAwaiter : INotifyCompletion
             where TStateMachine : IAsyncStateMachine
@@ -46,6 +48,7 @@ namespace AillieoUtils.EasyAsync
             awaiter.OnCompleted(stateMachine.MoveNext);
         }
 
+        [DebuggerHidden]
         public void AwaitUnsafeOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
             where TAwaiter : ICriticalNotifyCompletion
             where TStateMachine : IAsyncStateMachine
@@ -53,14 +56,31 @@ namespace AillieoUtils.EasyAsync
             awaiter.UnsafeOnCompleted(stateMachine.MoveNext);
         }
 
+        [DebuggerHidden]
         public void SetResult(T result)
         {
-            Task.Resolve(result);
+            if (promise == null)
+            {
+                promise = Promise<T>.Resolved(result);
+            }
+            else
+            {
+                Task.Resolve(result);
+            }
         }
 
+        [DebuggerHidden]
         public void SetException(Exception exception)
         {
-            Task.Reject(exception);
+            if (promise == null)
+            {
+                UnityEngine.Debug.LogError("REUSE");
+                promise = Promise<T>.Rejected(exception);
+            }
+            else
+            {
+                Task.Reject(exception);
+            }
         }
     }
 }

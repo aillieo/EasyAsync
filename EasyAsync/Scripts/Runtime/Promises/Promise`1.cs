@@ -7,20 +7,20 @@ namespace AillieoUtils.EasyAsync
     [AsyncMethodBuilder(typeof(EasyAsyncTaskMethodBuilder<>))]
     public sealed partial class Promise<T> : AbstractPromise
     {
-        private T v;
+        private T resultValue;
 
-        public T value
+        public T result
         {
             get
             {
                 Assert.AreNotEqual(status, Promise.Status.Pending);
-                return v;
+                return resultValue;
             }
 
             private set
             {
                 Assert.AreEqual(status, Promise.Status.Pending);
-                v = value;
+                resultValue = value;
             }
         }
 
@@ -29,17 +29,17 @@ namespace AillieoUtils.EasyAsync
             if (status == Promise.Status.Pending)
             {
                 this.callbacks = this.callbacks ?? CallbackQueue.Get();
-                this.callbacks.Enqueue(new Callback(Promise.Status.Fulfilled, () => onFulfilled(this.value)));
+                this.callbacks.Enqueue(new Callback(Promise.Status.Fulfilled, () => onFulfilled(this.result)));
             }
             else if (status == Promise.Status.Fulfilled)
             {
                 if (callbacks != null)
                 {
-                    this.callbacks.Enqueue(new Callback(Promise.Status.Fulfilled, () => onFulfilled(this.value)));
+                    this.callbacks.Enqueue(new Callback(Promise.Status.Fulfilled, () => onFulfilled(this.result)));
                 }
                 else
                 {
-                    onFulfilled(value);
+                    onFulfilled(result);
                 }
             }
 
@@ -88,7 +88,7 @@ namespace AillieoUtils.EasyAsync
 
         public void Resolve(T v)
         {
-            value = v;
+            result = v;
             status = Promise.Status.Fulfilled;
             ProcessCallbacks();
         }

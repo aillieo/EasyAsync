@@ -36,7 +36,7 @@ namespace AillieoUtils.EasyAsync
                 ExceptionDispatchInfo.Capture(promise.exception).Throw();
             }
 
-            return promise.value;
+            return promise.result;
         }
 
         //public void Complete(T result, Exception e = null)
