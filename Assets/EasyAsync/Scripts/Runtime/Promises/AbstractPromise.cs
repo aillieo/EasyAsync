@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System;
 using UnityEngine.Assertions;
 
@@ -8,22 +6,28 @@ namespace AillieoUtils.EasyAsync
 {
     public abstract class AbstractPromise
     {
-        private Promise.Status s = Promise.Status.Pending;
+        private Promise.Status statusValue = Promise.Status.Pending;
+
         public Promise.Status status
         {
-            get { return s;}
+            get
+            {
+                return statusValue;
+            }
+
             protected set
             {
                 lock (this)
                 {
-                    Assert.AreEqual(s, Promise.Status.Pending);
+                    Assert.AreEqual(statusValue, Promise.Status.Pending);
                     Assert.AreNotEqual(value, Promise.Status.Pending);
-                    s = value;
+                    statusValue = value;
                 }
             }
         }
 
         public string reason { get; protected set; }
+
         public Exception exception { get; protected set; }
 
         internal Queue<Callback> callbacks;
@@ -214,8 +218,12 @@ namespace AillieoUtils.EasyAsync
 
         public void Reject(Exception exception)
         {
-            this.exception = exception;
-            this.reason = exception.Message;
+            if (exception != null)
+            {
+                this.exception = exception;
+                this.reason = exception.Message;
+            }
+
             status = Promise.Status.Rejected;
 
             ProcessCallbacks();
@@ -244,6 +252,5 @@ namespace AillieoUtils.EasyAsync
                 }
             }
         }
-
     }
 }
