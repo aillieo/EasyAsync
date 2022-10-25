@@ -7,7 +7,7 @@ namespace AillieoUtils.EasyAsync
 {
     public struct Awaiter : ICriticalNotifyCompletion
     {
-        internal readonly Promise promise;
+        private readonly Promise promise;
 
         public Awaiter(Promise promise)
         {
