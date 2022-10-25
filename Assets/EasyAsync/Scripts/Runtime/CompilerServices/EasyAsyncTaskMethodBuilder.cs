@@ -13,11 +13,6 @@ namespace AillieoUtils.EasyAsync
         {
             get
             {
-                if (promise == null)
-                {
-                    promise = new Promise();
-                }
-
                 return promise;
             }
         }
@@ -25,7 +20,9 @@ namespace AillieoUtils.EasyAsync
         [DebuggerHidden]
         public static EasyAsyncTaskMethodBuilder Create()
         {
-            return default;
+            EasyAsyncTaskMethodBuilder builder = default;
+            builder.promise = new Promise();
+            return builder;
         }
 
         [DebuggerHidden]
@@ -59,28 +56,14 @@ namespace AillieoUtils.EasyAsync
         [DebuggerHidden]
         public void SetResult()
         {
-            if (promise == null)
-            {
-                promise = Promise.Resolved();
-            }
-            else
-            {
-                Task.Resolve();
-            }
+
+            Task.Resolve();
         }
 
         [DebuggerHidden]
         public void SetException(Exception exception)
         {
-            if (promise == null)
-            {
-                UnityEngine.Debug.LogError("REUSE");
-                promise = Promise.Rejected(exception);
-            }
-            else
-            {
-                Task.Reject(exception);
-            }
+            Task.Reject(exception);
         }
     }
 }
