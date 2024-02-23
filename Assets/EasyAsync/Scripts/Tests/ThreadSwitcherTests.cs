@@ -1,21 +1,25 @@
-using System.Collections;
-using System.Collections.Generic;
-using NUnit.Framework;
-using UnityEngine;
-using System;
-using System.Threading.Tasks;
-using UnityEngine.TestTools;
-using System.Threading;
+// -----------------------------------------------------------------------
+// <copyright file="ThreadSwitcherTests.cs" company="AillieoTech">
+// Copyright (c) AillieoTech. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace AillieoUtils.EasyAsync.Tests
 {
+    using System.Collections;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using NUnit.Framework;
+    using UnityEngine;
+    using UnityEngine.TestTools;
+
     [Category("ThreadSwitchers")]
     public class ThreadSwitcherTests
     {
         [UnityTest]
         public IEnumerator RunTestSwitch()
         {
-            var task = TestSwitch();
+            var task = this.TestSwitch();
             yield return new WaitUntil(() => task.IsCompleted);
         }
 

@@ -1,71 +1,73 @@
-using System;
-using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
-using UnityEngine.Assertions;
+// -----------------------------------------------------------------------
+// <copyright file="Awaiter.cs" company="AillieoTech">
+// Copyright (c) AillieoTech. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace AillieoUtils.EasyAsync
 {
-    public struct Awaiter : ICriticalNotifyCompletion
+    using System;
+    using System.Runtime.CompilerServices;
+    using System.Runtime.ExceptionServices;
+    using UnityEngine.Assertions;
+
+    /// <summary>
+    /// Represents an awaiter for a <see cref="Promise"/> object.
+    /// </summary>
+    public readonly struct Awaiter : ICriticalNotifyCompletion
     {
         private readonly Promise promise;
 
-        public Awaiter(Promise promise)
+        internal Awaiter(Promise promise)
         {
             this.promise = promise;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the asynchronous operation associated with this awaiter has completed.
+        /// </summary>
         public bool IsCompleted
         {
             get
             {
-                if (promise != null)
+                if (this.promise != null)
                 {
-                    return promise.status != Promise.Status.Pending;
+                    return this.promise.status != Promise.Status.Pending;
                 }
 
                 return true;
             }
         }
 
+        /// <summary>
+        /// Ends the await on the completed asynchronous operation.
+        /// </summary>
         public void GetResult()
         {
-            Assert.IsTrue(IsCompleted);
+            Assert.IsTrue(this.IsCompleted);
 
-            if (promise != null && promise.exception != null)
+            if (this.promise != null && this.promise.exception != null)
             {
-                ExceptionDispatchInfo.Capture(promise.exception).Throw();
+                ExceptionDispatchInfo.Capture(this.promise.exception).Throw();
             }
         }
 
-        //public void Complete(Exception e = null)
-        //{
-        //    Assert.IsFalse(IsCompleted);
-        //    Assert.IsNotNull(promise);
-
-        //    if (e == null)
-        //    {
-        //        promise.Resolve();
-        //    }
-        //    else
-        //    {
-        //        promise.Reject(e);
-        //    }
-        //}
-
+        /// <inheritdoc/>
         void INotifyCompletion.OnCompleted(Action continuation)
         {
-            Assert.IsFalse(IsCompleted);
-            Assert.IsNotNull(promise);
+            Assert.IsFalse(this.IsCompleted);
+            Assert.IsNotNull(this.promise);
 
-            promise.OnFulfilled(continuation).OnRejected(continuation);
+            this.promise.OnFulfilled(continuation).OnRejected(continuation);
         }
 
+        /// <inheritdoc/>
         void ICriticalNotifyCompletion.UnsafeOnCompleted(Action continuation)
         {
-            Assert.IsFalse(IsCompleted);
-            Assert.IsNotNull(promise);
+            Assert.IsFalse(this.IsCompleted);
+            Assert.IsNotNull(this.promise);
 
-            promise.OnFulfilled(continuation).OnRejected(continuation);
+            this.promise.OnFulfilled(continuation).OnRejected(continuation);
         }
     }
 }

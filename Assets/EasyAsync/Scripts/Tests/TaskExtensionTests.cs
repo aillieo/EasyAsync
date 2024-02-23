@@ -1,14 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
-using NUnit.Framework;
-using UnityEngine;
-using System;
-using System.Threading.Tasks;
-using UnityEngine.TestTools;
-using AillieoUtils.EasyAsync.TaskExtensions;
+// -----------------------------------------------------------------------
+// <copyright file="TaskExtensionTests.cs" company="AillieoTech">
+// Copyright (c) AillieoTech. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace AillieoUtils.EasyAsync.Tests
 {
+    using System;
+    using System.Collections;
+    using System.Threading.Tasks;
+    using AillieoUtils.EasyAsync.TaskExtensions;
+    using NUnit.Framework;
+    using UnityEngine.TestTools;
+
     [Category("TaskExtensionTests")]
     public class TaskExtensionTests
     {

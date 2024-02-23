@@ -1,12 +1,14 @@
-using System.Collections;
-using System.Collections.Generic;
-using NUnit.Framework;
-using UnityEngine;
-using System;
-using System.Runtime.CompilerServices;
+// -----------------------------------------------------------------------
+// <copyright file="PromiseHelper.cs" company="AillieoTech">
+// Copyright (c) AillieoTech. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace AillieoUtils.EasyAsync.Tests
 {
+    using System.Collections;
+    using UnityEngine;
+
     public static class PromiseHelper
     {
         private static IEnumerator DelayResolve(Promise promise, float delay)

@@ -1,12 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
-using NUnit.Framework;
-using UnityEngine;
-using System;
-using UnityEngine.TestTools;
+// -----------------------------------------------------------------------
+// <copyright file="PromiseTests.cs" company="AillieoTech">
+// Copyright (c) AillieoTech. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace AillieoUtils.EasyAsync.Tests
 {
+    using System;
+    using System.Collections;
+    using NUnit.Framework;
+    using UnityEngine;
+    using UnityEngine.TestTools;
+
     [Category("Promise")]
     public static class PromiseTests
     {

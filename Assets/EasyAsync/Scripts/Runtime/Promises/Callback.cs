@@ -1,8 +1,14 @@
-using System;
+// -----------------------------------------------------------------------
+// <copyright file="Callback.cs" company="AillieoTech">
+// Copyright (c) AillieoTech. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace AillieoUtils.EasyAsync
 {
-    internal struct Callback
+    using System;
+
+    internal readonly struct Callback
     {
         public readonly Action action;
         public readonly Promise.Status mask;
