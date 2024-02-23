@@ -1,9 +1,13 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
+// -----------------------------------------------------------------------
+// <copyright file="CallbackQueue.cs" company="AillieoTech">
+// Copyright (c) AillieoTech. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace AillieoUtils.EasyAsync
 {
+    using System.Collections.Generic;
+
     internal static class CallbackQueue
     {
         private const int capacity = 256;

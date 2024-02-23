@@ -1,3 +1,4 @@
+#pragma warning disable SA1633 // File should have header
 // from https://github.com/dotnet/csharplang/
 namespace System.Runtime.CompilerServices
 {
@@ -9,11 +10,13 @@ namespace System.Runtime.CompilerServices
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Delegate | AttributeTargets.Enum, Inherited = false, AllowMultiple = false)]
     public sealed class AsyncMethodBuilderAttribute : Attribute
     {
-        /// <summary>Initializes the <see cref="AsyncMethodBuilderAttribute"/>.</summary>
+        /// <summary>Initializes a new instance of the <see cref="AsyncMethodBuilderAttribute"/> class.</summary>
         /// <param name="builderType">The <see cref="Type"/> of the associated builder.</param>
-        public AsyncMethodBuilderAttribute(Type builderType) => BuilderType = builderType;
+        public AsyncMethodBuilderAttribute(Type builderType) => this.BuilderType = builderType;
 
         /// <summary>Gets the <see cref="Type"/> of the associated builder.</summary>
         public Type BuilderType { get; }
     }
 }
+
+#pragma warning restore SA1633 // File should have header

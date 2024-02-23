@@ -1,20 +1,26 @@
-using System.Collections;
-using NUnit.Framework;
-using UnityEngine;
-using System;
-using System.Threading.Tasks;
-using UnityEngine.TestTools;
-using AillieoUtils.EasyAsync.CoroutineExtensions;
+// -----------------------------------------------------------------------
+// <copyright file="YieldInstructionExtensionTests.cs" company="AillieoTech">
+// Copyright (c) AillieoTech. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace AillieoUtils.EasyAsync.Tests
 {
+    using System;
+    using System.Collections;
+    using System.Threading.Tasks;
+    using AillieoUtils.EasyAsync.CoroutineExtensions;
+    using NUnit.Framework;
+    using UnityEngine;
+    using UnityEngine.TestTools;
+
     [Category("YieldInstructionExtensionTests")]
     public class YieldInstructionExtensionTests
     {
         [UnityTest]
         public IEnumerator TestWaitForSeconds()
         {
-            var task = TestWaitForSecondsImpl();
+            var task = this.TestWaitForSecondsImpl();
             yield return new WaitUntil(() => task.IsCompleted);
         }
 
@@ -29,7 +35,7 @@ namespace AillieoUtils.EasyAsync.Tests
         [UnityTest]
         public IEnumerator TestCustomCoroutine()
         {
-            var task = TestCustomCoroutineImpl();
+            var task = this.TestCustomCoroutineImpl();
             yield return new WaitUntil(() => task.IsCompleted);
         }
 
@@ -37,14 +43,14 @@ namespace AillieoUtils.EasyAsync.Tests
         {
             DateTime start = DateTime.Now;
 
-            await CustomCoroutine();
+            await this.CustomCoroutine();
 
             Assert.GreaterOrEqual((DateTime.Now - start).TotalMilliseconds, 1000);
 
             start = DateTime.Now;
 
             CoroutineRunner runner = new GameObject("runner").AddComponent<CoroutineRunner>();
-            await runner.StartCoroutine(CustomCoroutine());
+            await runner.StartCoroutine(this.CustomCoroutine());
 
             Assert.GreaterOrEqual((DateTime.Now - start).TotalMilliseconds, 1000);
 

@@ -1,22 +1,15 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+// -----------------------------------------------------------------------
+// <copyright file="CoroutineRunner.cs" company="AillieoTech">
+// Copyright (c) AillieoTech. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace AillieoUtils.EasyAsync.CoroutineExtensions
 {
+    using UnityEngine;
+
     internal class CoroutineRunner : MonoBehaviour
     {
-        //[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void CreateInstance()
-        {
-            if (instance == null)
-            {
-                GameObject go = new GameObject($"[{nameof(CoroutineRunner)}]");
-                instance = go.AddComponent<CoroutineRunner>();
-                DontDestroyOnLoad(go);
-            }
-        }
-
         private static CoroutineRunner instance;
 
         internal static CoroutineRunner Instance
@@ -25,6 +18,17 @@ namespace AillieoUtils.EasyAsync.CoroutineExtensions
             {
                 CreateInstance();
                 return instance;
+            }
+        }
+
+        // [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void CreateInstance()
+        {
+            if (instance == null)
+            {
+                GameObject go = new GameObject($"[{nameof(CoroutineRunner)}]");
+                instance = go.AddComponent<CoroutineRunner>();
+                DontDestroyOnLoad(go);
             }
         }
 
